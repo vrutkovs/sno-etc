@@ -1,0 +1,173 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: etcd
+  namespace: openshift-etcd
+  labels:
+    app: etcd
+    k8s-app: etcd
+    etcd: "true"
+    revision: "3"
+spec:
+  containers:
+  - name: etcd
+    image: quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:55f2f221f96f1b6f14a9716db12a5e2ecb3b51b1368ba37ea37d131bfd08fa3d
+    imagePullPolicy: IfNotPresent
+    terminationMessagePolicy: FallbackToLogsOnError
+    command:
+      - /bin/sh
+      - -c
+      - |
+        #!/bin/sh
+        set -euo pipefail
+
+        export ETCD_NAME=${NODE_00_50_56_89_62_30_ETCD_NAME}
+        export ETCD_INITIAL_CLUSTER="${ETCD_NAME}=https://${NODE_00_50_56_89_62_30_ETCD_URL_HOST}:2380"
+        env | grep ETCD | grep -v NODE
+        export ETCD_NODE_PEER_URL=https://${NODE_00_50_56_89_62_30_ETCD_URL_HOST}:2380
+
+        # checking if there are any fio perf file left behind that could be deleted without problems
+        if [ ! -z $(ls -A "/var/lib/etcd/etcd_perf*") ]; then
+          rm -f /var/lib/etcd/etcd_perf*
+        fi
+
+        # checking if data directory is empty, if not etcdctl restore will fail
+        if [ ! -z $(ls -A "/var/lib/etcd") ]; then
+          echo "please delete the contents of data directory before restoring, running the restore script will do this for you"
+          exit 1
+        fi
+
+        # check if we have backup file to be restored
+        # if the file exist, check if it has not changed size in last 5 seconds
+        if [ ! -f /var/lib/etcd-backup/snapshot.db ]; then
+          echo "please make a copy of the snapshot db file, then move that copy to /var/lib/etcd-backup/snapshot.db"
+          exit 1
+        else
+          filesize=$(stat --format=%s "/var/lib/etcd-backup/snapshot.db")
+          sleep 5
+          newfilesize=$(stat --format=%s "/var/lib/etcd-backup/snapshot.db")
+          if [ "$filesize" != "$newfilesize" ]; then
+            echo "file size has changed since last 5 seconds, retry sometime after copying is complete"
+            exit 1
+          fi
+        fi
+
+        UUID=$(uuidgen)
+        echo "restoring to a single node cluster"
+        ETCDCTL_API=3 /usr/bin/etcdctl snapshot restore /var/lib/etcd-backup/snapshot.db \
+         --name  $ETCD_NAME \
+         --initial-cluster=$ETCD_INITIAL_CLUSTER \
+         --initial-cluster-token "openshift-etcd-${UUID}" \
+         --initial-advertise-peer-urls $ETCD_NODE_PEER_URL \
+         --data-dir="/var/lib/etcd/restore-${UUID}"
+
+        mv /var/lib/etcd/restore-${UUID}/* /var/lib/etcd/
+
+        rmdir /var/lib/etcd/restore-${UUID}
+        rm /var/lib/etcd-backup/snapshot.db
+
+        set -x
+        exec etcd \
+          --logger=zap \
+          --log-level=info \
+          --initial-advertise-peer-urls=https://${NODE_00_50_56_89_62_30_IP}:2380 \
+          --cert-file=/etc/kubernetes/static-pod-certs/secrets/etcd-all-certs/etcd-serving-00-50-56-89-62-30.crt \
+          --key-file=/etc/kubernetes/static-pod-certs/secrets/etcd-all-certs/etcd-serving-00-50-56-89-62-30.key \
+          --trusted-ca-file=/etc/kubernetes/static-pod-certs/configmaps/etcd-serving-ca/ca-bundle.crt \
+          --client-cert-auth=true \
+          --peer-cert-file=/etc/kubernetes/static-pod-certs/secrets/etcd-all-certs/etcd-peer-00-50-56-89-62-30.crt \
+          --peer-key-file=/etc/kubernetes/static-pod-certs/secrets/etcd-all-certs/etcd-peer-00-50-56-89-62-30.key \
+          --peer-trusted-ca-file=/etc/kubernetes/static-pod-certs/configmaps/etcd-peer-client-ca/ca-bundle.crt \
+          --peer-client-cert-auth=true \
+          --advertise-client-urls=https://${NODE_00_50_56_89_62_30_IP}:2379 \
+          --listen-client-urls=https://0.0.0.0:2379 \
+          --listen-peer-urls=https://0.0.0.0:2380 \
+          --metrics=extensive \
+          --listen-metrics-urls=https://0.0.0.0:9978
+    env:
+      - name: "ALL_ETCD_ENDPOINTS"
+        value: "https://10.19.115.9:2379"
+      - name: "ETCDCTL_API"
+        value: "3"
+      - name: "ETCDCTL_CACERT"
+        value: "/etc/kubernetes/static-pod-certs/configmaps/etcd-serving-ca/ca-bundle.crt"
+      - name: "ETCDCTL_CERT"
+        value: "/etc/kubernetes/static-pod-certs/secrets/etcd-all-certs/etcd-peer-00-50-56-89-62-30.crt"
+      - name: "ETCDCTL_ENDPOINTS"
+        value: "https://10.19.115.9:2379"
+      - name: "ETCDCTL_KEY"
+        value: "/etc/kubernetes/static-pod-certs/secrets/etcd-all-certs/etcd-peer-00-50-56-89-62-30.key"
+      - name: "ETCD_CIPHER_SUITES"
+        value: "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"
+      - name: "ETCD_DATA_DIR"
+        value: "/var/lib/etcd"
+      - name: "ETCD_ELECTION_TIMEOUT"
+        value: "1000"
+      - name: "ETCD_ENABLE_PPROF"
+        value: "true"
+      - name: "ETCD_EXPERIMENTAL_MAX_LEARNERS"
+        value: "1"
+      - name: "ETCD_EXPERIMENTAL_WARNING_APPLY_DURATION"
+        value: "200ms"
+      - name: "ETCD_EXPERIMENTAL_WATCH_PROGRESS_NOTIFY_INTERVAL"
+        value: "5s"
+      - name: "ETCD_HEARTBEAT_INTERVAL"
+        value: "100"
+      - name: "ETCD_IMAGE"
+        value: "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:55f2f221f96f1b6f14a9716db12a5e2ecb3b51b1368ba37ea37d131bfd08fa3d"
+      - name: "ETCD_INITIAL_CLUSTER_STATE"
+        value: "existing"
+      - name: "ETCD_QUOTA_BACKEND_BYTES"
+        value: "8589934592"
+      - name: "ETCD_SOCKET_REUSE_ADDRESS"
+        value: "true"
+      - name: "NODE_00_50_56_89_62_30_ETCD_NAME"
+        value: "00-50-56-89-62-30"
+      - name: "NODE_00_50_56_89_62_30_ETCD_URL_HOST"
+        value: "10.19.115.9"
+      - name: "NODE_00_50_56_89_62_30_IP"
+        value: "10.19.115.9"
+      - name: "ETCD_STATIC_POD_REV"
+        value: "3"
+    resources:
+      requests:
+        memory: 600Mi
+        cpu: 300m
+    readinessProbe:
+      tcpSocket:
+        port: 2380
+      failureThreshold: 3
+      initialDelaySeconds: 3
+      periodSeconds: 5
+      successThreshold: 1
+      timeoutSeconds: 5
+    securityContext:
+      privileged: true
+    volumeMounts:
+      - mountPath: /etc/kubernetes/manifests
+        name: static-pod-dir
+      - mountPath: /etc/kubernetes/static-pod-certs
+        name: cert-dir
+      - mountPath: /var/lib/etcd/
+        name: data-dir
+      - mountPath: /var/lib/etcd-backup/
+        name: backup-dir
+  hostNetwork: true
+  priorityClassName: system-node-critical
+  tolerations:
+  - operator: "Exists"
+  volumes:
+    - hostPath:
+        path: /etc/kubernetes/manifests
+      name: static-pod-dir
+    - hostPath:
+        path: /etc/kubernetes/static-pod-resources/etcd-certs
+      name: cert-dir
+    - hostPath:
+        path: /var/lib/etcd
+        type: ""
+      name: data-dir
+    - hostPath:
+        path: /var/lib/etcd-backup
+        type: ""
+      name: backup-dir

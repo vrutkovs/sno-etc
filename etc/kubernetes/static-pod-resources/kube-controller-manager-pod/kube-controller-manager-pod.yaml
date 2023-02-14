@@ -8,7 +8,7 @@
     "labels": {
       "app": "kube-controller-manager",
       "kube-controller-manager": "true",
-      "revision": "7"
+      "revision": "8"
     },
     "annotations": {
       "kubectl.kubernetes.io/default-container": "kube-controller-manager",
@@ -20,7 +20,7 @@
       {
         "name": "resource-dir",
         "hostPath": {
-          "path": "/etc/kubernetes/static-pod-resources/kube-controller-manager-pod-7"
+          "path": "/etc/kubernetes/static-pod-resources/kube-controller-manager-pod-8"
         }
       },
       {

@@ -39,7 +39,7 @@
       "RotateKubeletServerCertificate=true",
       "DownwardAPIHugePages=true",
       "CSIMigrationAzureFile=false",
-      "CSIMigrationvSphere=false",
+      "CSIMigrationvSphere=false"
     ],
     "flex-volume-plugin-dir": [
       "/etc/kubernetes/kubelet-plugins/volume/exec"
@@ -72,17 +72,17 @@
       "10257"
     ],
     "service-account-private-key-file": [
-      "/etc/kubernetes/static-pod-resources/secrets/service-account-private-key/service-account.key",
+      "/etc/kubernetes/static-pod-resources/secrets/service-account-private-key/service-account.key"
     ],
     "service-cluster-ip-range": [
       "172.30.0.0/16"
     ],
     "use-service-account-credentials": [
       "true"
-    ],
+    ]
   },
   "kind": "KubeControllerManagerConfig",
   "serviceServingCert": {
     "certFile": "/etc/kubernetes/static-pod-resources/configmaps/service-ca/ca-bundle.crt"
-  },
+  }
 }

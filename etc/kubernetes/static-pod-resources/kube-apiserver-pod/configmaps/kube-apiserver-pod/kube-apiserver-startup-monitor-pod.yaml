@@ -6,7 +6,7 @@
     "namespace": "openshift-kube-apiserver",
     "creationTimestamp": null,
     "labels": {
-      "revision": "4"
+      "revision": "5"
     }
   },
   "spec": {
@@ -26,7 +26,7 @@
       {
         "name": "pod-resource-dir",
         "hostPath": {
-          "path": "/etc/kubernetes/static-pod-resources/kube-apiserver-pod-4"
+          "path": "/etc/kubernetes/static-pod-resources/kube-apiserver-pod-5"
         }
       },
       {
@@ -57,7 +57,7 @@
           "--manifests-dir=/etc/kubernetes/manifests",
           "--resource-dir=/etc/kubernetes/static-pod-resources",
           "--installer-lock-file=/var/lock/kube-apiserver-installer.lock",
-          "--revision=4",
+          "--revision=5",
           "--node-name=00-50-56-89-62-30",
           "--kubeconfig=/etc/kubernetes/static-pod-resources/configmaps/kube-apiserver-cert-syncer-kubeconfig/kubeconfig",
           "--log-file-path=/var/log/kube-apiserver/startup.log",

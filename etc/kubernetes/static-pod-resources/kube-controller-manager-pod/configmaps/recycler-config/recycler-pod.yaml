@@ -13,10 +13,10 @@ spec:
     - name: recycler-container
       image: "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:afa73a12a1ffd31f77b10a25c43a4d02b0fd62f927f6209c26983bd8aee021bf"
       command:
-        - "/bin/bash"
+      - "/bin/bash"
       args:
-        - "-c"
-        - 'test -e /scrub && rm -rf /scrub/..?* /scrub/.[!.]* /scrub/*  && test -z "$(ls -A /scrub)" || exit 1'
+      - "-c"
+      - "test -e /scrub && rm -rf /scrub/..?* /scrub/.[!.]* /scrub/*  && test -z \"$(ls -A /scrub)\" || exit 1"
       volumeMounts:
         - mountPath: /scrub
           name: vol

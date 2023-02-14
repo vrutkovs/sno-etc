@@ -1,0 +1,12 @@
+
+export IP="10.19.115.9"
+export BASE_RESOLV_CONF=/run/NetworkManager/resolv.conf
+if [ "$2" = "dhcp4-change" ] || [ "$2" = "dhcp6-change" ] || [ "$2" = "up" ] || [ "$2" = "connectivity-change" ]; then
+	export TMP_FILE=$(mktemp /etc/forcedns_resolv.conf.XXXXXX)
+	cp  $BASE_RESOLV_CONF $TMP_FILE
+	chmod --reference=$BASE_RESOLV_CONF $TMP_FILE
+	sed -i -e "s/sno.choomba.one//" \
+	-e "s/search /& sno.choomba.one /" \
+	-e "0,/nameserver/s/nameserver/& $IP\n&/" $TMP_FILE
+	mv $TMP_FILE /etc/resolv.conf
+fi

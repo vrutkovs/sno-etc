@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ -x /usr/bin/kubensenter ]; then
+  exec /usr/bin/kubensenter "$@"
+else
+  exec "$@"
+fi

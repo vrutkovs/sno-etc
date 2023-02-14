@@ -1,0 +1,21 @@
+[Unit]
+Description=Machine Config Daemon Pull
+# Make sure it runs only on OSTree booted system
+ConditionPathExists=/run/ostree-booted
+# This "stamp file" is unlinked when we complete
+# machine-config-daemon-firstboot.service
+ConditionPathExists=/etc/ignition-machine-config-encapsulated.json
+# Run after crio-wipe so the pulled MCD image is protected against a corrupted storage from a forced shutdown
+Wants=network-online.target crio-wipe.service
+After=network-online.target crio-wipe.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# See https://github.com/coreos/fedora-coreos-tracker/issues/354
+ExecStart=/bin/sh -c '/bin/mkdir -p /run/bin && chcon --reference=/usr/bin /run/bin'
+ExecStart=/bin/sh -c "while ! /usr/bin/podman pull --authfile=/var/lib/kubelet/config.json --quiet 'quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c629cec133d38b7a17fd1a14606cafcc3f7a3bf5fe9c14cb99ef938094b04ac2'; do sleep 1; done"
+ExecStart=/usr/bin/podman run --rm --quiet --net=host -v /run/bin:/host/run/bin:z --entrypoint=cp 'quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c629cec133d38b7a17fd1a14606cafcc3f7a3bf5fe9c14cb99ef938094b04ac2' /usr/bin/machine-config-daemon /host/run/bin
+ExecStart=/bin/chcon system_u:object_r:bin_t:s0 /run/bin/machine-config-daemon
+[Install]
+RequiredBy=machine-config-daemon-firstboot.service

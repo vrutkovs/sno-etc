@@ -1,0 +1,216 @@
+{
+  "kind": "Pod",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "openshift-kube-scheduler",
+    "namespace": "openshift-kube-scheduler",
+    "creationTimestamp": null,
+    "labels": {
+      "app": "openshift-kube-scheduler",
+      "revision": "6",
+      "scheduler": "true"
+    },
+    "annotations": {
+      "kubectl.kubernetes.io/default-container": "kube-scheduler",
+      "target.workload.openshift.io/management": "{\"effect\": \"PreferredDuringScheduling\"}"
+    }
+  },
+  "spec": {
+    "volumes": [
+      {
+        "name": "resource-dir",
+        "hostPath": {
+          "path": "/etc/kubernetes/static-pod-resources/kube-scheduler-pod-6"
+        }
+      },
+      {
+        "name": "cert-dir",
+        "hostPath": {
+          "path": "/etc/kubernetes/static-pod-resources/kube-scheduler-certs"
+        }
+      }
+    ],
+    "initContainers": [
+      {
+        "name": "wait-for-host-port",
+        "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:6191e17ae9a6d100e9e62ac3dae2dab4c36a1cddea0c6cc50f95dc466dc2cac3",
+        "command": [
+          "/usr/bin/timeout",
+          "30",
+          "/bin/bash",
+          "-c"
+        ],
+        "args": [
+          "echo -n \"Waiting for port :10259 to be released.\"\nwhile [ -n \"$(ss -Htan '( sport = 10259 )')\" ]; do\n  echo -n \".\"\n  sleep 1\ndone\n"
+        ],
+        "resources": {
+          "requests": {
+            "cpu": "15m",
+            "memory": "50Mi"
+          }
+        },
+        "terminationMessagePolicy": "FallbackToLogsOnError",
+        "imagePullPolicy": "IfNotPresent"
+      }
+    ],
+    "containers": [
+      {
+        "name": "kube-scheduler",
+        "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:6191e17ae9a6d100e9e62ac3dae2dab4c36a1cddea0c6cc50f95dc466dc2cac3",
+        "command": [
+          "hyperkube",
+          "kube-scheduler"
+        ],
+        "args": [
+          "--config=/etc/kubernetes/static-pod-resources/configmaps/config/config.yaml",
+          "--cert-dir=/var/run/kubernetes",
+          "--authentication-kubeconfig=/etc/kubernetes/static-pod-resources/configmaps/scheduler-kubeconfig/kubeconfig",
+          "--authorization-kubeconfig=/etc/kubernetes/static-pod-resources/configmaps/scheduler-kubeconfig/kubeconfig",
+          "--feature-gates=APIPriorityAndFairness=true,CSIMigrationAzureFile=false,CSIMigrationvSphere=false,DownwardAPIHugePages=true,RotateKubeletServerCertificate=true",
+          "-v=2",
+          "--tls-cert-file=/etc/kubernetes/static-pod-resources/secrets/serving-cert/tls.crt",
+          "--tls-private-key-file=/etc/kubernetes/static-pod-resources/secrets/serving-cert/tls.key",
+          "--tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+          "--tls-min-version=VersionTLS12"
+        ],
+        "ports": [
+          {
+            "containerPort": 10259
+          }
+        ],
+        "resources": {
+          "requests": {
+            "cpu": "15m",
+            "memory": "50Mi"
+          }
+        },
+        "volumeMounts": [
+          {
+            "name": "resource-dir",
+            "mountPath": "/etc/kubernetes/static-pod-resources"
+          },
+          {
+            "name": "cert-dir",
+            "mountPath": "/etc/kubernetes/static-pod-certs"
+          }
+        ],
+        "livenessProbe": {
+          "httpGet": {
+            "path": "healthz",
+            "port": 10259,
+            "scheme": "HTTPS"
+          },
+          "initialDelaySeconds": 45
+        },
+        "readinessProbe": {
+          "httpGet": {
+            "path": "healthz",
+            "port": 10259,
+            "scheme": "HTTPS"
+          },
+          "initialDelaySeconds": 45
+        },
+        "terminationMessagePolicy": "FallbackToLogsOnError",
+        "imagePullPolicy": "IfNotPresent"
+      },
+      {
+        "name": "kube-scheduler-cert-syncer",
+        "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:160f9ed93e853b286b3b6651f8080fe4f60f715e43700d7f44041579214deace",
+        "command": [
+          "cluster-kube-scheduler-operator",
+          "cert-syncer"
+        ],
+        "args": [
+          "--kubeconfig=/etc/kubernetes/static-pod-resources/configmaps/kube-scheduler-cert-syncer-kubeconfig/kubeconfig",
+          "--namespace=$(POD_NAMESPACE)",
+          "--destination-dir=/etc/kubernetes/static-pod-certs"
+        ],
+        "env": [
+          {
+            "name": "POD_NAME",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "metadata.name"
+              }
+            }
+          },
+          {
+            "name": "POD_NAMESPACE",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "metadata.namespace"
+              }
+            }
+          }
+        ],
+        "resources": {
+          "requests": {
+            "cpu": "5m",
+            "memory": "50Mi"
+          }
+        },
+        "volumeMounts": [
+          {
+            "name": "resource-dir",
+            "mountPath": "/etc/kubernetes/static-pod-resources"
+          },
+          {
+            "name": "cert-dir",
+            "mountPath": "/etc/kubernetes/static-pod-certs"
+          }
+        ],
+        "terminationMessagePolicy": "FallbackToLogsOnError",
+        "imagePullPolicy": "IfNotPresent"
+      },
+      {
+        "name": "kube-scheduler-recovery-controller",
+        "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:160f9ed93e853b286b3b6651f8080fe4f60f715e43700d7f44041579214deace",
+        "command": [
+          "/bin/bash",
+          "-euxo",
+          "pipefail",
+          "-c"
+        ],
+        "args": [
+          "timeout 3m /bin/bash -exuo pipefail -c 'while [ -n \"$(ss -Htanop \\( sport = 11443 \\))\" ]; do sleep 1; done'\n\nexec cluster-kube-scheduler-operator cert-recovery-controller --kubeconfig=/etc/kubernetes/static-pod-resources/configmaps/kube-scheduler-cert-syncer-kubeconfig/kubeconfig  --namespace=${POD_NAMESPACE} --listen=0.0.0.0:11443 -v=2\n"
+        ],
+        "env": [
+          {
+            "name": "POD_NAMESPACE",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "metadata.namespace"
+              }
+            }
+          }
+        ],
+        "resources": {
+          "requests": {
+            "cpu": "5m",
+            "memory": "50Mi"
+          }
+        },
+        "volumeMounts": [
+          {
+            "name": "resource-dir",
+            "mountPath": "/etc/kubernetes/static-pod-resources"
+          },
+          {
+            "name": "cert-dir",
+            "mountPath": "/etc/kubernetes/static-pod-certs"
+          }
+        ],
+        "terminationMessagePolicy": "FallbackToLogsOnError",
+        "imagePullPolicy": "IfNotPresent"
+      }
+    ],
+    "hostNetwork": true,
+    "tolerations": [
+      {
+        "operator": "Exists"
+      }
+    ],
+    "priorityClassName": "system-node-critical"
+  },
+  "status": {}
+}

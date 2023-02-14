@@ -1,0 +1,120 @@
+{
+  "kind": "Pod",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "kube-apiserver-startup-monitor",
+    "namespace": "openshift-kube-apiserver",
+    "creationTimestamp": null,
+    "labels": {
+      "revision": "2"
+    }
+  },
+  "spec": {
+    "volumes": [
+      {
+        "name": "resource-dir",
+        "hostPath": {
+          "path": "/etc/kubernetes/static-pod-resources"
+        }
+      },
+      {
+        "name": "manifests",
+        "hostPath": {
+          "path": "/etc/kubernetes/manifests"
+        }
+      },
+      {
+        "name": "pod-resource-dir",
+        "hostPath": {
+          "path": "/etc/kubernetes/static-pod-resources/kube-apiserver-pod-2"
+        }
+      },
+      {
+        "name": "var-lock",
+        "hostPath": {
+          "path": "/var/lock"
+        }
+      },
+      {
+        "name": "var-log",
+        "hostPath": {
+          "path": "/var/log/kube-apiserver"
+        }
+      }
+    ],
+    "containers": [
+      {
+        "name": "startup-monitor",
+        "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:42843002c92accd28b92ca3b83fd0251d6994cc97082fcf692d34ddb3e2162cf",
+        "command": [
+          "cluster-kube-apiserver-operator",
+          "startup-monitor"
+        ],
+        "args": [
+          "-v=2",
+          "--fallback-timeout-duration=300s",
+          "--target-name=kube-apiserver",
+          "--manifests-dir=/etc/kubernetes/manifests",
+          "--resource-dir=/etc/kubernetes/static-pod-resources",
+          "--installer-lock-file=/var/lock/kube-apiserver-installer.lock",
+          "--revision=2",
+          "--node-name=00-50-56-89-62-30",
+          "--kubeconfig=/etc/kubernetes/static-pod-resources/configmaps/kube-apiserver-cert-syncer-kubeconfig/kubeconfig",
+          "--log-file-path=/var/log/kube-apiserver/startup.log",
+          "--logtostderr=false",
+          "--alsologtostderr=true"
+        ],
+        "resources": {
+          "requests": {
+            "cpu": "5m",
+            "memory": "50Mi"
+          }
+        },
+        "volumeMounts": [
+          {
+            "name": "manifests",
+            "mountPath": "/etc/kubernetes/manifests"
+          },
+          {
+            "name": "resource-dir",
+            "mountPath": "/etc/kubernetes/static-pod-resources"
+          },
+          {
+            "name": "pod-resource-dir",
+            "readOnly": true,
+            "mountPath": "/etc/kubernetes/static-pod-resources/secrets",
+            "subPath": "secrets"
+          },
+          {
+            "name": "pod-resource-dir",
+            "readOnly": true,
+            "mountPath": "/etc/kubernetes/static-pod-resources/configmaps",
+            "subPath": "configmaps"
+          },
+          {
+            "name": "var-lock",
+            "mountPath": "/var/lock"
+          },
+          {
+            "name": "var-log",
+            "mountPath": "/var/log/kube-apiserver"
+          }
+        ],
+        "terminationMessagePolicy": "FallbackToLogsOnError",
+        "imagePullPolicy": "IfNotPresent",
+        "securityContext": {
+          "privileged": true
+        }
+      }
+    ],
+    "terminationGracePeriodSeconds": 5,
+    "hostNetwork": true,
+    "tolerations": [
+      {
+        "operator": "Exists"
+      }
+    ],
+    "priorityClassName": "system-node-critical"
+  },
+  "status": {}
+}

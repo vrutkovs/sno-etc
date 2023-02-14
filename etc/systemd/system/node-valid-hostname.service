@@ -1,0 +1,17 @@
+[Unit]
+Description=Wait for a non-localhost hostname
+Before=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=root
+ExecStart=/usr/local/bin/mco-hostname --wait
+
+# Wait up to 5min for the node to get a non-localhost name
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target
+# Ensure that network-online.target will not complete until the node has a non-localhost hostname.
+RequiredBy=network-online.target

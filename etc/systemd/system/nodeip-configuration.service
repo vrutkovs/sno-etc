@@ -1,0 +1,35 @@
+[Unit]
+Description=Writes IP address configuration so that kubelet and crio services select a valid node IP
+Wants=NetworkManager-wait-online.service crio-wipe.service
+After=NetworkManager-wait-online.service ignition-firstboot-complete.service crio-wipe.service
+Before=kubelet.service crio.service ovs-configuration.service
+
+[Service]
+# Need oneshot to delay kubelet
+Type=oneshot
+# Would prefer to do Restart=on-failure instead of this bash retry loop, but
+# the version of systemd we have right now doesn't support it. It should be
+# available in systemd v244 and higher.
+ExecStart=/bin/bash -c " \
+  until \
+  /usr/bin/podman run --rm \
+  --authfile /var/lib/kubelet/config.json \
+  --net=host \
+  --security-opt label=disable \
+  --volume /etc/systemd/system:/etc/systemd/system \
+  --volume /run/nodeip-configuration:/run/nodeip-configuration \
+  quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:edde51044c9b13b8aa2317f71c2c2e06580daeb695fe471b2c3f837140b5d589 \
+  node-ip \
+  set \
+  --retry-on-failure \
+  ${NODEIP_HINT:-${KUBELET_NODEIP_HINT:-}}; \
+  do \
+  sleep 5; \
+  done"
+ExecStart=/bin/systemctl daemon-reload
+ExecStartPre=/bin/mkdir -p /run/nodeip-configuration
+
+EnvironmentFile=-/etc/default/nodeip-configuration
+
+[Install]
+RequiredBy=kubelet.service

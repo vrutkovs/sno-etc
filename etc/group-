@@ -4,4 +4,3 @@ wheel:x:10:core
 sudo:x:16:core
 systemd-journal:x:190:core
 core:x:1000:
-containers:x:995:

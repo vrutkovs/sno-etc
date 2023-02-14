@@ -1,0 +1,1 @@
+../../usr/share/console-login-helper-messages/profile.sh

@@ -1,0 +1,9 @@
+Red Hat Enterprise Linux CoreOS 412.86.202302091419-0
+  Part of OpenShift 4.12, RHCOS is a Kubernetes native operating system
+  managed by the Machine Config Operator (`clusteroperator/machine-config`).
+
+WARNING: Direct SSH access to machines is not recommended; instead,
+make configuration changes via `machineconfig` objects:
+  https://docs.openshift.com/container-platform/4.12/architecture/architecture-rhcos.html
+
+---

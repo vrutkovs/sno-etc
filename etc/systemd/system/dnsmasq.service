@@ -1,0 +1,10 @@
+[Unit]
+Description=Run dnsmasq to provide local dns for Single Node OpenShift
+Before=kubelet.service crio.service
+After=network.target
+
+[Service]
+ExecStart=/usr/sbin/dnsmasq -k
+
+[Install]
+WantedBy=multi-user.target

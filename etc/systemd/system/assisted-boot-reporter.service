@@ -1,0 +1,19 @@
+[Unit]
+Description=Collect and upload host boot logs to assisted-service
+Wants=network-online.target
+After=network-online.target
+DefaultDependencies=no
+[Service]
+Environment=ASSISTED_SERVICE_URL=http://10.19.115.119:6000
+Environment=PULL_SECRET_TOKEN=
+Environment=CLUSTER_ID=bc2568ad-2f05-4405-9a78-71f7cd28b68e
+Environment=HOST_ID=687b0942-08db-346f-54f9-e9d3224561d9
+Environment=LOG_SEND_FREQUENCY_IN_MINUTES=5
+Environment=SERVICE_TIMEOUT_MINUTES=60
+User=root
+Type=oneshot
+ExecStart=/bin/bash /usr/local/bin/assisted-boot-reporter.sh
+PrivateTmp=true
+RemainAfterExit=no
+[Install]
+WantedBy=multi-user.target

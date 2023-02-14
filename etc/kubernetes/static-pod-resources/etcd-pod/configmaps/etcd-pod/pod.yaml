@@ -10,7 +10,7 @@ metadata:
     app: etcd
     k8s-app: etcd
     etcd: "true"
-    revision: "2"
+    revision: "3"
 spec:
   initContainers:
     - name: setup
@@ -210,7 +210,7 @@ spec:
       - name: "NODE_00_50_56_89_62_30_IP"
         value: "10.19.115.9"
       - name: "ETCD_STATIC_POD_VERSION"
-        value: "2"
+        value: "3"
   - name: etcd
     image: quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:55f2f221f96f1b6f14a9716db12a5e2ecb3b51b1368ba37ea37d131bfd08fa3d
     imagePullPolicy: IfNotPresent
@@ -311,7 +311,7 @@ spec:
       - name: "NODE_00_50_56_89_62_30_IP"
         value: "10.19.115.9"
       - name: "ETCD_STATIC_POD_VERSION"
-        value: "2"
+        value: "3"
     resources:
       requests:
         memory: 600Mi
@@ -424,7 +424,7 @@ spec:
       - name: "NODE_00_50_56_89_62_30_IP"
         value: "10.19.115.9"
       - name: "ETCD_STATIC_POD_VERSION"
-        value: "2"
+        value: "3"
     resources:
       requests:
         memory: 200Mi
@@ -524,7 +524,7 @@ spec:
         path: /etc/kubernetes/manifests
       name: static-pod-dir
     - hostPath:
-        path: /etc/kubernetes/static-pod-resources/etcd-pod-2
+        path: /etc/kubernetes/static-pod-resources/etcd-pod-3
       name: resource-dir
     - hostPath:
         path: /etc/kubernetes/static-pod-resources/etcd-certs

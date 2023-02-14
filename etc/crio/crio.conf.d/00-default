@@ -1,0 +1,82 @@
+[crio]
+internal_wipe = true
+version_file_persist = "/var/lib/crio/version"
+
+[crio.api]
+stream_address = ""
+stream_port = "10010"
+
+[crio.runtime]
+selinux = true
+conmon = ""
+conmon_cgroup = "pod"
+default_env = [
+    "NSS_SDB_USE_CACHE=no",
+]
+log_level = "info"
+cgroup_manager = "systemd"
+default_sysctls = [
+    "net.ipv4.ping_group_range=0 2147483647",
+]
+hooks_dir = [
+    "/etc/containers/oci/hooks.d",
+    "/run/containers/oci/hooks.d",
+    "/usr/share/containers/oci/hooks.d",
+]
+manage_ns_lifecycle = true
+absent_mount_sources_to_reject = [
+    "/etc/hostname",
+]
+drop_infra_ctr = true
+
+[crio.runtime.workloads.openshift-builder]
+activation_annotation = "io.openshift.builder"
+allowed_annotations = [
+  "io.kubernetes.cri-o.userns-mode",
+  "io.kubernetes.cri-o.Devices"
+]
+[crio.runtime.workloads.openshift-builder.resources]
+
+[crio.image]
+global_auth_file = "/var/lib/kubelet/config.json"
+pause_image = "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:be64c744b92d1b1df463d84d8277c38069f3ce4e8e95ce84d4a6ffac6dc53710"
+pause_image_auth_file = "/var/lib/kubelet/config.json"
+pause_command = "/usr/bin/pod"
+
+[crio.network]
+network_dir = "/etc/kubernetes/cni/net.d/"
+plugin_dirs = [
+    "/var/lib/cni/bin",
+    "/usr/libexec/cni",
+]
+
+[crio.metrics]
+enable_metrics = true
+metrics_port = 9537
+metrics_collectors = [
+  "operations", # DEPRECATED: in favour of "operations_total"
+  "operations_latency_microseconds_total", # DEPRECATED: in favour of "operations_latency_seconds_total"
+  "operations_latency_microseconds", # DEPRECATED: in favour of "operations_latency_seconds"
+  "operations_errors", # DEPRECATED: in favour of "operations_errors_total"
+  "image_pulls_layer_size",
+  "containers_oom_total", # DEPRECATED: in favour of "containers_oom_count_total"
+  "containers_oom",
+  # Drop metrics with excessive label cardinality.
+  # "image_pulls_by_digest", # DEPRECATED: in favour of "image_pulls_bytes_total"
+  # "image_pulls_by_name", # DEPRECATED: in favour of "image_pulls_bytes_total"
+  # "image_pulls_by_name_skipped", # DEPRECATED: in favour of "image_pulls_skipped_bytes_total"
+  # "image_pulls_failures", # DEPRECATED: in favour of "image_pulls_failure_total"
+  # "image_pulls_successes", # DEPRECATED: in favour of "image_pulls_success_total"
+  # "image_layer_reuse", # DEPRECATED: in favour of "image_layer_reuse_total"
+  "operations_total",
+  "operations_latency_seconds_total",
+  "operations_latency_seconds",
+  "operations_errors_total",
+  "image_pulls_bytes_total",
+  "image_pulls_skipped_bytes_total",
+  "image_pulls_success_total",
+  "image_pulls_failure_total",
+  "image_layer_reuse_total",
+  "containers_oom_count_total",
+  "processes_defunct"
+]

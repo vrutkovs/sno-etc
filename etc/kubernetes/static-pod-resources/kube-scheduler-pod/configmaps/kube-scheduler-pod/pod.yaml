@@ -7,7 +7,7 @@
     "creationTimestamp": null,
     "labels": {
       "app": "openshift-kube-scheduler",
-      "revision": "6",
+      "revision": "7",
       "scheduler": "true"
     },
     "annotations": {
@@ -20,7 +20,7 @@
       {
         "name": "resource-dir",
         "hostPath": {
-          "path": "/etc/kubernetes/static-pod-resources/kube-scheduler-pod-6"
+          "path": "/etc/kubernetes/static-pod-resources/kube-scheduler-pod-7"
         }
       },
       {

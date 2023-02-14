@@ -257,7 +257,7 @@
   },
   "apiVersion": "kubecontrolplane.config.openshift.io/v1",
   "authConfig": {
-    "oauthMetadataFile": ""
+    "oauthMetadataFile": "/etc/kubernetes/static-pod-resources/configmaps/oauth-metadata/oauthMetadata"
   },
   "consolePublicURL": "",
   "corsAllowedOrigins": [

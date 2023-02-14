@@ -8,7 +8,7 @@
     "labels": {
       "apiserver": "true",
       "app": "openshift-kube-apiserver",
-      "revision": "2"
+      "revision": "4"
     },
     "annotations": {
       "kubectl.kubernetes.io/default-container": "kube-apiserver",
@@ -20,7 +20,7 @@
       {
         "name": "resource-dir",
         "hostPath": {
-          "path": "/etc/kubernetes/static-pod-resources/kube-apiserver-pod-2"
+          "path": "/etc/kubernetes/static-pod-resources/kube-apiserver-pod-4"
         }
       },
       {
@@ -103,7 +103,7 @@
           },
           {
             "name": "STATIC_POD_VERSION",
-            "value": "2"
+            "value": "4"
           },
           {
             "name": "HOST_IP",
